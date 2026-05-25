@@ -66,7 +66,7 @@ RUN pip install --no-cache-dir \
 # bumped for the newer toolchain (numba 0.53 won't build against modern numpy;
 # spconv flavor must match CUDA 11.8).
 RUN pip install --no-cache-dir \
-        pycuda \
+        "pycuda==2024.1.2" \
         lyft_dataset_sdk \
         networkx==2.2 \
         numba==0.56.4 \

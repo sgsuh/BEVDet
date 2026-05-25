@@ -67,12 +67,12 @@ class HDF5CalibratorBEVDet(HDF5Calibrator):
                 slice_list = tuple(slice(0, end) for end in opt_shape)
                 data_np = data_np[slice_list]
 
-                data_np_cuda_ptr = cuda.mem_alloc(data_np.nbytes)
-                cuda.memcpy_htod(data_np_cuda_ptr,
-                                 np.ascontiguousarray(data_np))
-                self.buffers[name] = data_np_cuda_ptr
+                data_np = np.ascontiguousarray(data_np)
+                if name not in self.buffers:
+                    self.buffers[name] = cuda.mem_alloc(data_np.nbytes)
+                cuda.memcpy_htod(self.buffers[name], data_np)
 
-                ret.append(self.buffers[name])
+                ret.append(int(self.buffers[name]))
             self.count += 1
             return ret
         else:

@@ -26,7 +26,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Deploy BEVDet with Tensorrt')
     parser.add_argument('config', help='deploy config file path')
     parser.add_argument('engine', help='checkpoint file')
-    parser.add_argument('--samples', default=500, help='samples to benchmark')
+    parser.add_argument('--samples', type=int, default=500,
+                        help='samples to benchmark')
     parser.add_argument('--postprocessing', action='store_true')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--prefetch', action='store_true',
