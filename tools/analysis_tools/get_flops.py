@@ -49,7 +49,7 @@ def construct_input(input_shape):
         torch.ones(()).new_empty((1, 6, 3, *input_shape)).cuda(), rot,
         rot, intrins, intrins,
         torch.ones((1, 6, 3)).cuda(),
-        torch.eye(3).float().cuda().view(1, 3, 3)
+        torch.eye(4).float().cuda().view(1, 4, 4)
     ])
     return input
 
