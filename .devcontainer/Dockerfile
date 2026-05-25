@@ -80,4 +80,79 @@ RUN pip install --no-cache-dir \
         open3d \
         onnxruntime-gpu
 
+# ============================================================================
+# MMDeploy (HuangJunJie2017 fork) — TensorRT-only deployment path.
+# Follows docs/en/01-how-to-build/linux-x86_64.md, skipping the ONNX Runtime
+# and OpenVINO sections. The mmdeploy source itself lives as a submodule at
+# /workspace/BEVDet/mmdeploy and is built in devcontainer.json's
+# postCreateCommand (so edits to the bind-mounted source take effect).
+# ============================================================================
+
+# Build tools: mmdeploy's CMakeLists requires cmake>=3.14 and C++17 (g++>=7).
+# ubuntu20.04 apt cmake is 3.16.3 and g++ is 9.x — both fine. build-essential
+# / ninja-build were installed earlier.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+# TensorRT 8.6.1 — the GA release that supports sm_89 (Ada Lovelace / RTX 4070)
+# on CUDA 11.8. The NVIDIA CUDA apt repo configured by the base image hosts
+# these packages. Pin to a single version across all TRT components to avoid
+# apt picking mismatched majors.
+ARG TENSORRT_VERSION=8.6.1.6-1+cuda11.8
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libnvinfer8=${TENSORRT_VERSION} \
+        libnvinfer-dev=${TENSORRT_VERSION} \
+        libnvinfer-plugin8=${TENSORRT_VERSION} \
+        libnvinfer-plugin-dev=${TENSORRT_VERSION} \
+        libnvinfer-headers-dev=${TENSORRT_VERSION} \
+        libnvinfer-headers-plugin-dev=${TENSORRT_VERSION} \
+        libnvonnxparsers8=${TENSORRT_VERSION} \
+        libnvonnxparsers-dev=${TENSORRT_VERSION} \
+        libnvparsers8=${TENSORRT_VERSION} \
+        libnvparsers-dev=${TENSORRT_VERSION} && \
+    rm -rf /var/lib/apt/lists/*
+
+# mmdeploy's FindTENSORRT.cmake / FindCUDNN.cmake probe ${TENSORRT_DIR}/{include,lib}
+# and ${CUDNN_DIR}/{include,lib(64)}. apt installs into Debian's multiarch
+# layout (/usr/include/x86_64-linux-gnu, /usr/lib/x86_64-linux-gnu) which those
+# finders don't search — so collect symlinks into /opt with the expected shape.
+RUN mkdir -p /opt/tensorrt/include /opt/tensorrt/lib \
+             /opt/cudnn/include    /opt/cudnn/lib && \
+    for f in /usr/include/x86_64-linux-gnu/Nv*.h; do ln -s "$f" /opt/tensorrt/include/; done && \
+    for f in /usr/lib/x86_64-linux-gnu/libnvinfer*       \
+             /usr/lib/x86_64-linux-gnu/libnvonnxparsers* \
+             /usr/lib/x86_64-linux-gnu/libnvparsers*;    do ln -s "$f" /opt/tensorrt/lib/; done && \
+    for f in /usr/include/cudnn*.h; do ln -s "$f" /opt/cudnn/include/; done && \
+    for f in /usr/lib/x86_64-linux-gnu/libcudnn*; do ln -s "$f" /opt/cudnn/lib/; done
+
+ENV TENSORRT_DIR=/opt/tensorrt
+ENV CUDNN_DIR=/opt/cudnn
+ENV LD_LIBRARY_PATH=${TENSORRT_DIR}/lib:${CUDNN_DIR}/lib:${LD_LIBRARY_PATH}
+
+# TensorRT Python bindings for the conda env. Version pinned to the apt-installed
+# C++ libs so the loader doesn't see two different libnvinfer majors.
+RUN pip install --no-cache-dir \
+        --extra-index-url https://pypi.nvidia.com \
+        tensorrt==8.6.1
+
+# mmdeploy runtime + build Python deps (runtime.txt + build.txt of the fork).
+# protobuf is pinned <=3.20.1 by mmdeploy because onnx-trt parsers break on newer.
+RUN pip install --no-cache-dir \
+        "protobuf<=3.20.1" \
+        onnx \
+        h5py \
+        multiprocess \
+        terminaltables \
+        grpcio \
+        packaging
+
+# ppl.cv v0.7.0 (CUDA backend). Only needed if you later build the MMDeploy SDK
+# (-DMMDEPLOY_BUILD_SDK=ON); the model-converter + custom-ops path doesn't use
+# it. Building here so the image is ready for both.
+RUN git clone --depth 1 --branch v0.7.0 https://github.com/openppl-public/ppl.cv.git /opt/pplcv && \
+    cd /opt/pplcv && \
+    ./build.sh cuda
+ENV PPLCV_DIR=/opt/pplcv
+
 WORKDIR /workspace
