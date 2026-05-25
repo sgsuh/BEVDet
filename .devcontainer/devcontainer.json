@@ -1,0 +1,45 @@
+{
+  "name": "BEVDet (CUDA 11.7, RTX 4070)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "runArgs": [
+    "--gpus", "all",
+    "--shm-size=16g",
+    "--ipc=host"
+  ],
+  "containerEnv": {
+    "FORCE_CUDA": "1",
+    "TORCH_CUDA_ARCH_LIST": "8.0;8.6;8.9",
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility,video"
+  },
+  "workspaceFolder": "/workspace/BEVDet",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/BEVDet,type=bind,consistency=cached",
+  "mounts": [
+    // Mount nuScenes dataset here if you keep it outside the repo.
+    // Edit the host path on the left of the colon.
+    // "source=/path/to/nuscenes,target=/workspace/BEVDet/data/nuscenes,type=bind,readonly"
+  ],
+  // README step 2: pip install -v -e .  (run once after the image is built)
+  "postCreateCommand": "pip install -v -e . && python -c 'import torch; print(\"torch\", torch.__version__, \"cuda\", torch.version.cuda, \"available\", torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"\")'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "ms-toolsai.jupyter",
+        "nvidia.nsight-vscode-edition",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/conda/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "remoteUser": "root"
+}
