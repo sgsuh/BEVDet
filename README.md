@@ -136,6 +136,76 @@ python tools/convert_bevdet_to_TRT.py $config $checkpoint $work_dir --fuse-conv-
 python tools/analysis_tools/benchmark_trt.py $config $engine
 ```
 
+## Deployment (deploy branch)
+
+The `deploy` branch adds an end-to-end deployment path for **BEVDet-R50** on a
+single consumer GPU (developed/verified on an RTX 4070), including a reproducible
+devcontainer, TensorRT export, and a standalone C++ runtime.
+
+#### Devcontainer
+
+A `.devcontainer/` is provided that builds CUDA + TensorRT, the `mmdeploy`
+submodule, and the C++ host dependencies (Eigen, yaml-cpp, nlohmann-json,
+OpenCV). Open the repo in VS Code and "Reopen in Container", or build the image
+directly from `.devcontainer/Dockerfile`. Pull the submodule first:
+
+```shell
+git submodule update --init --recursive
+```
+
+#### Verify the PyTorch model
+
+Convenience wrappers around the standard tools, pinned to
+`configs/bevdet/bevdet-r50.py` + `ckpts/bevdet-r50.pth`:
+
+```shell
+bash tools/test_bevdet_r50.sh        # mAP/NDS eval (nuScenes v1.0-mini supported)
+bash tools/benchmark_bevdet_r50.sh   # PyTorch inference speed
+bash tools/get_flops_bevdet_r50.sh   # FLOPs (256x704)
+bash tools/vis_bevdet_r50.sh         # render predictions to work_dirs/bevdet-r50-vis
+```
+
+#### Export to TensorRT
+
+```shell
+# build the engine (FP16, INT8 calibration) into work_dirs/
+bash tools/convert_bevdet_to_TRT.sh
+# test TensorRT inference speed
+bash tools/benchmark_trt_bevdet_r50.sh
+```
+
+This produces `work_dirs/bevdet_int8_fuse.{onnx,engine}` and relies on the
+`bev_pool_v2` mmdeploy plugin.
+
+#### C++ TensorRT runtime (`cpp/`)
+
+A standalone C++ application that runs the exported engine directly on nuScenes
+frames and saves 6-camera + BEV detection overlays — no Python at inference time.
+Highlights:
+
+- `nuscenes_loader` parses `v1.0-mini` JSON into per-keyframe inputs (image
+  paths, intrinsics, sensor-to-lidar and ego/lidar poses).
+- The `bev_pool_v2` TRT plugin is reimplemented in C++/CUDA.
+- Post-processing matches the 1-task / 10-class CenterHead: heatmap-channel class
+  labels, sigmoid on the heatmap logits, and `exp()` on the (log-space) box
+  dimensions.
+
+```shell
+# 1) dump the bev_pool ranks/intervals meta once (reused for every frame)
+python tools/export_bev_pool_meta.py \
+    configs/bevdet/bevdet-r50.py ckpts/bevdet-r50.pth \
+    --out-dir work_dirs/meta
+
+# 2) build
+cd cpp && mkdir -p build && cd build && cmake .. && cmake --build . -j
+
+# 3) run (paths/options in cpp/cfg/params.yaml)
+./bevdet
+```
+
+Overlay PNGs are written to the `vis_output_dir` set in `cpp/cfg/params.yaml`
+(default `work_dirs/cpp_vis/`).
+
 ## Acknowledgement
 
 This project is not possible without multiple great open-sourced code bases. We list some notable examples below.
