@@ -1,0 +1,5 @@
+Onnx: /workspace/BEVDet/work_dirs/bevdet_int8_fuse.onnx
+Engine: /workspace/BEVDet/work_dirs/bevdet_int8_fuse.engine
+WorkspaceSize: 512
+BatchSize: 1
+Precision: FP16

@@ -1,0 +1,38 @@
+ranks_bev_path: /workspace/BEVDet/work_dirs/meta/ranks_bev.bin
+ranks_depth_path: /workspace/BEVDet/work_dirs/meta/ranks_depth.bin
+ranks_feat_path: /workspace/BEVDet/work_dirs/meta/ranks_feat.bin
+interval_starts_path: /workspace/BEVDet/work_dirs/meta/interval_starts.bin
+interval_lengths_path: /workspace/BEVDet/work_dirs/meta/interval_lengths.bin
+nuscenes_root: /workspace/BEVDet/data/nuscenes
+nuscenes_version: v1.0-mini
+max_samples: 5
+num_cam: 6
+resize_width: 768
+resize_height: 432
+crop_left: 32
+crop_right: 736
+crop_top: 176
+crop_bottom: 432
+pre_max_size: 1000
+post_max_size: 83
+max_num: 500
+code_size: 9
+out_size_factor: 8
+score_threshold: 0.1
+num_class: [10]
+nms_type: [0]
+min_radius: [4.0]
+voxel_size: [0.1, 0.1, 0.2]
+pc_range: [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+post_center_range: [-61.2, -61.2, -10.0, 61.2, 61.2, 10.0]
+nms_thresh: [0.2]
+nms_rescale_factor: [[1.0]]
+draw_boxes_indexes: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]
+draw_boxes_indexes_bev: [[0, 1], [1, 2], [2, 3], [3, 0]]
+color_map: [[70, 130, 180], [0, 0, 230], [135, 206, 235], [100, 149, 237], [219, 112, 147], [255, 61, 99], [240, 128, 128], [138, 43, 226], [112, 128, 144], [210, 105, 30]]
+vis: true
+vis_output_dir: /workspace/BEVDet/work_dirs/cpp_vis
+mean: [123.675, 116.28, 103.58]
+std: [58.395, 57.12, 57.375]
+corners_norm: [[-0.5, -0.5, 0.0], [-0.5, -0.5, 1.0], [-0.5, 0.5, 1.0], [-0.5, 0.5, 0.0], [0.5, -0.5, 0.0], [0.5, -0.5, 1.0], [0.5, 0.5, 1.0], [0.5, 0.5, 0.0]]
+openmp_num_threads: 4

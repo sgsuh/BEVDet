@@ -36,7 +36,8 @@
         "ms-python.debugpy",
         "ms-toolsai.jupyter",
         "nvidia.nsight-vscode-edition",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "ms-vscode.cmake-tools"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/opt/conda/bin/python",

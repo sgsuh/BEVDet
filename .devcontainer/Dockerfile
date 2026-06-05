@@ -27,7 +27,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         vim git wget curl ca-certificates \
         libsm6 libxext6 libxrender-dev libgl1-mesa-glx \
-        libssl-dev libopencv-dev libspdlog-dev \
+        libssl-dev libopencv-dev libspdlog-dev libeigen3-dev libyaml-cpp-dev nlohmann-json3-dev \
         build-essential ninja-build && \
     rm -rf /var/lib/apt/lists/*
 
